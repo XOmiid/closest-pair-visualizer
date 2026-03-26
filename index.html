@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closest Pair of Points — Interactive Teaching Tool</title>
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN SYSTEM — Terminal/Lab aesthetic
+   Dark panels, amber accents, monospace-first
+═══════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:        #080b10;
+  --panel:     #0d1117;
+  --panel2:    #111820;
+  --border:    #1c2535;
+  --border2:   #243044;
+  --text:      #b8c8e0;
+  --text-dim:  #4a6080;
+  --text-hi:   #ddeeff;
+  --amber:     #ffb347;
+  --amber2:    #ff8c00;
+  --cyan:      #00cfff;
+  --green:     #00e5a0;
+  --red:       #ff4f6a;
+  --purple:    #9b72ff;
+  --yellow:    #ffe066;
+  --blue:      #4f9eff;
+  --strip-col: rgba(255,230,80,0.09);
+  --mono:      'IBM Plex Mono', monospace;
+  --sans:      'IBM Plex Sans', sans-serif;
+  --rad:       6px;
+  --trans:     0.22s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--panel); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── Header ── */
+#app-header {
+  background: linear-gradient(90deg, #0a0f18 0%, #0d1420 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky; top: 0; z-index: 100;
+}
+#app-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, var(--amber), var(--cyan), transparent);
+  opacity: 0.4;
+}
+.logo-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: rgba(255,179,71,0.1);
+  border: 1px solid rgba(255,179,71,0.3);
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+.app-title {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-hi);
+}
+.header-pills { margin-left: auto; display: flex; gap: 8px; }
+.pill {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.pill-dc { color: var(--cyan); border-color: rgba(0,207,255,0.4); background: rgba(0,207,255,0.07); }
+.pill-bf { color: var(--amber); border-color: rgba(255,179,71,0.4); background: rgba(255,179,71,0.07); }
+
+/* ── Main layout ── */
+#app-main {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: calc(100vh - 45px);
+}
+
+/* ── LEFT PANEL ── */
+#left-panel {
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  overflow-y: auto;
+  max-height: calc(100vh - 45px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panel-section {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.panel-section:last-child { border-bottom: none; }
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Inputs ── */
+.input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.inp {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: #0a0f18;
+  border: 1px solid var(--border2);
+  color: var(--text-hi);
+  padding: 6px 10px;
+  border-radius: var(--rad);
+  outline: none;
+  transition: border-color var(--trans);
+  flex: 1;
+}
+.inp:focus { border-color: var(--amber); }
+.inp::placeholder { color: var(--text-dim); }
+
+/* ── Buttons ── */
+.btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: var(--rad);
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.btn-amber {
+  background: rgba(255,179,71,0.1);
+  border-color: rgba(255,179,71,0.4);
+  color: var(--amber);
+}
+.btn-amber:hover { background: rgba(255,179,71,0.2); border-color: var(--amber); }
+.btn-cyan {
+  background: rgba(0,207,255,0.08);
+  border-color: rgba(0,207,255,0.35);
+  color: var(--cyan);
+}
+.btn-cyan:hover { background: rgba(0,207,255,0.18); border-color: var(--cyan); }
+.btn-green {
+  background: rgba(0,229,160,0.08);
+  border-color: rgba(0,229,160,0.35);
+  color: var(--green);
+}
+.btn-green:hover { background: rgba(0,229,160,0.18); border-color: var(--green); }
+.btn-red {
+  background: rgba(255,79,106,0.08);
+  border-color: rgba(255,79,106,0.35);
+  color: var(--red);
+}
+.btn-red:hover { background: rgba(255,79,106,0.18); border-color: var(--red); }
+.btn-ghost {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border2);
+  color: var(--text);
+}
+.btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.btn-sm { padding: 5px 10px; font-size: 10px; }
+
+/* Preset row */
+.preset-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Algo selector ── */
+.algo-tabs { display: flex; gap: 0; border: 1px solid var(--border2); border-radius: var(--rad); overflow: hidden; margin-bottom: 8px; }
+.algo-tab {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.algo-tab.active { background: rgba(255,179,71,0.12); color: var(--amber); }
+.algo-tab:first-child { border-right: 1px solid var(--border2); }
+
+/* ── Speed slider ── */
+.slider-wrap { display: flex; align-items: center; gap: 10px; }
+.slider-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); min-width: 36px; }
+input[type=range] {
+  -webkit-appearance: none;
+  flex: 1; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--amber);
+  cursor: pointer;
+}
+.speed-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Playback controls ── */
+.pb-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Status & counters ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #080c14;
+  border-radius: var(--rad);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.status-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  flex: 1;
+}
+.step-counter {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--cyan);
+}
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-box {
+  background: #080c14;
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+  padding: 8px 10px;
+}
+.stat-box-label { font-family: var(--mono); font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.stat-box-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.val-amber { color: var(--amber); }
+.val-cyan { color: var(--cyan); }
+.val-green { color: var(--green); }
+.val-purple { color: var(--purple); }
+
+/* ── Pseudocode ── */
+#pseudo-panel {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: #07090f;
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+  overflow-y: auto;
+  max-height: 200px;
+  padding: 6px 0;
+}
+.ps-line {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 10px;
+  transition: background 0.15s;
+  cursor: default;
+  position: relative;
+}
+.ps-line:hover { background: rgba(255,255,255,0.03); }
+.ps-line.active {
+  background: rgba(255,230,80,0.1);
+  border-left: 2px solid var(--yellow);
+  padding-left: 8px;
+}
+.ps-num { color: var(--text-dim); width: 22px; flex-shrink: 0; user-select: none; }
+.ps-code { color: var(--text); white-space: pre; }
+.ps-kw { color: var(--purple); }
+.ps-fn { color: var(--cyan); }
+.ps-cm { color: #2d4060; }
+.ps-num2 { color: var(--amber); }
+.ps-tooltip {
+  display: none;
+  position: absolute;
+  left: 100%; top: 0;
+  background: #1a2540;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: var(--rad);
+  z-index: 50;
+  width: 200px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.ps-line:hover .ps-tooltip { display: block; }
+
+/* ── Step explanation ── */
+#step-explanation {
+  background: #080c14;
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--cyan);
+  border-radius: var(--rad);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  min-height: 54px;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+}
+#step-explanation strong { color: var(--yellow); }
+#step-explanation em { color: var(--green); font-style: normal; }
+
+/* ── History table ── */
+#history-table-wrap {
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+  background: #07090f;
+}
+#history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+#history-table th {
+  position: sticky; top: 0;
+  background: #0d1420;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+#history-table td { padding: 4px 8px; color: var(--text); border-bottom: 1px solid rgba(28,37,53,0.5); }
+#history-table tr:hover td { background: rgba(255,255,255,0.03); cursor: pointer; }
+#history-table tr.h-div td { color: var(--blue); }
+#history-table tr.h-bf td { color: var(--amber); }
+#history-table tr.h-strip td { color: var(--yellow); }
+#history-table tr.h-found td { color: var(--green); font-weight: 600; }
+#history-table tr.h-recurse td { color: var(--purple); }
+#history-table tr.h-current td { background: rgba(255,230,80,0.06) !important; }
+
+/* ── Legend ── */
+.legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.legend-line { width: 18px; height: 2px; flex-shrink: 0; }
+
+/* ── Educational collapsibles ── */
+.edu-section { border: 1px solid var(--border); border-radius: var(--rad); margin-bottom: 8px; overflow: hidden; }
+.edu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background: var(--panel2);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  user-select: none;
+}
+.edu-header:hover { color: var(--amber); }
+.edu-header .chevron { transition: transform 0.2s; font-size: 10px; color: var(--text-dim); }
+.edu-header.open .chevron { transform: rotate(180deg); }
+.edu-body {
+  display: none;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+.edu-body.open { display: block; }
+.edu-body p { margin-bottom: 8px; }
+.edu-body p:last-child { margin-bottom: 0; }
+.edu-body strong { color: var(--amber); }
+.edu-body code { font-family: var(--mono); background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--cyan); }
+.edu-body ul { padding-left: 16px; }
+.edu-body li { margin-bottom: 4px; }
+
+/* ─── RIGHT PANEL ─── */
+#right-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.right-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+.right-tab {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 10px 18px;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.right-tab:hover { color: var(--text); }
+.right-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+.tab-content { display: none; flex: 1; overflow: hidden; }
+.tab-content.active { display: flex; flex-direction: column; }
+
+/* ── Visualization tab ── */
+#viz-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0,207,255,0.025) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(155,114,255,0.025) 0%, transparent 55%),
+    var(--bg);
+}
+#main-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* SVG element styles */
+.pt-circle { cursor: pointer; }
+.pt-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; pointer-events: none; }
+.dist-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; pointer-events: none; }
+
+/* ── Complexity tab ── */
+#complexity-tab {
+  padding: 20px;
+  overflow-y: auto;
+}
+.complexity-header { margin-bottom: 20px; }
+.complexity-header h2 { font-family: var(--mono); font-size: 16px; color: var(--amber); margin-bottom: 6px; }
+.complexity-header p { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+
+.recurrence-box {
+  background: var(--panel2);
+  border: 1px solid var(--border2);
+  border-left: 3px solid var(--purple);
+  padding: 12px 16px;
+  border-radius: var(--rad);
+  margin-bottom: 16px;
+  font-family: var(--mono);
+}
+.recurrence-box .rec-title { font-size: 10px; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 1px; }
+.recurrence-box .rec-formula { font-size: 14px; color: var(--purple); }
+.recurrence-box .rec-desc { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+.complexity-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.n-label { font-family: var(--mono); font-size: 12px; color: var(--text); }
+#n-size-slider { width: 150px; }
+.n-val { font-family: var(--mono); font-size: 14px; color: var(--amber); font-weight: 700; }
+
+#complexity-svg { width: 100%; border: 1px solid var(--border); border-radius: var(--rad); background: #07090f; display: block; }
+
+.complexity-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-family: var(--mono); font-size: 11px; }
+.complexity-table th { background: var(--panel2); color: var(--text-dim); padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.complexity-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.complexity-table tr:last-child td { border-bottom: none; }
+.complexity-table .c-dc { color: var(--cyan); }
+.complexity-table .c-bf { color: var(--amber); }
+.complexity-table .c-ratio { color: var(--green); }
+
+/* ── Sorting tab ── */
+#sorting-tab {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  gap: 16px;
+}
+#sorting-tab h2 { font-family: var(--mono); font-size: 14px; color: var(--cyan); }
+.sort-explanation { font-size: 12px; color: var(--text); line-height: 1.7; }
+.sort-explanation strong { color: var(--yellow); }
+.sort-explanation code { font-family: var(--mono); background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--cyan); }
+#sorting-svg { width: 100%; border: 1px solid var(--border); border-radius: var(--rad); background: #07090f; display: block; }
+.sort-rule-box {
+  background: var(--panel2);
+  border: 1px solid rgba(0,229,160,0.3);
+  border-radius: var(--rad);
+  padding: 12px 14px;
+}
+.sort-rule-box .rule-title { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 1px; margin-bottom: 6px; }
+.sort-rule-box p { font-size: 12px; color: var(--text); line-height: 1.6; }
+
+/* ── Recursion tree tab ── */
+#tree-tab { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+#tree-tab h2 { font-family: var(--mono); font-size: 14px; color: var(--purple); }
+#tree-svg { width: 100%; border: 1px solid var(--border); border-radius: var(--rad); background: #07090f; display: block; }
+.tree-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+.tree-legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--text-dim); }
+.tl-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ── Responsive ── */
+@media (max-width: 980px) {
+  #app-main { grid-template-columns: 1fr; }
+  #left-panel { max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+  #right-panel { min-height: 600px; }
+}
+
+/* ── Animations ── */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.anim-in { animation: slideIn 0.2s ease both; }
+
+/* Status colors */
+.s-idle { background: var(--text-dim); }
+.s-ready { background: var(--blue); }
+.s-playing { background: var(--green); animation: pulse 1s infinite; }
+.s-paused { background: var(--amber); }
+.s-done { background: var(--green); }
+
+/* Input points tags */
+.point-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,207,255,0.1);
+  border: 1px solid rgba(0,207,255,0.3);
+  color: var(--cyan);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin: 2px;
+}
+.point-tag .del-pt { cursor: pointer; color: var(--red); margin-left: 3px; }
+#point-tags { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 6px; min-height: 22px; }
+
+/* Worst case note */
+.worst-case-box {
+  background: rgba(255,79,106,0.07);
+  border: 1px solid rgba(255,79,106,0.25);
+  border-radius: var(--rad);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.worst-case-box strong { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header id="app-header">
+  <span class="logo-tag">ALGO</span>
+  <span class="app-title">Closest Pair of Points — Interactive Teaching Tool</span>
+  <div class="header-pills">
+    <span class="pill pill-dc">D&amp;C: O(n log n)</span>
+    <span class="pill pill-bf">Brute: O(n²)</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<div id="app-main">
+
+<!-- ╔══════════════════════════════════════╗
+     ║          LEFT CONTROL PANEL          ║
+     ╚══════════════════════════════════════╝ -->
+<div id="left-panel">
+
+  <!-- Algorithm selector -->
+  <div class="panel-section">
+    <div class="section-label">Algorithm</div>
+    <div class="algo-tabs">
+      <button class="algo-tab active" id="tab-dc" onclick="selectAlgo('dc')">Divide &amp; Conquer</button>
+      <button class="algo-tab" id="tab-bf" onclick="selectAlgo('bf')">Brute Force</button>
+    </div>
+  </div>
+
+  <!-- Custom Input -->
+  <div class="panel-section">
+    <div class="section-label">Custom Points</div>
+    <div class="input-row">
+      <input class="inp" id="pt-x" type="number" step="any" placeholder="x" style="max-width:80px">
+      <input class="inp" id="pt-y" type="number" step="any" placeholder="y" style="max-width:80px">
+      <button class="btn btn-cyan btn-sm" onclick="addCustomPoint()">+ Add</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearCustomPoints()">Clear</button>
+    </div>
+    <div id="point-tags"></div>
+    <div class="input-row" style="margin-top:8px">
+      <button class="btn btn-amber btn-sm" onclick="applyCustomPoints()" style="flex:1">Apply Custom Points</button>
+    </div>
+  </div>
+
+  <!-- Presets -->
+  <div class="panel-section">
+    <div class="section-label">Preset Datasets</div>
+    <div class="preset-row">
+      <button class="btn btn-ghost btn-sm" onclick="loadPreset(0)">📍 Simple (8 pts)</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadPreset(1)">🔵 Cluster (12 pts)</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadPreset(2)">⚡ Worst Case (10 pts)</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadPreset(3)">🎲 Random (14 pts)</button>
+    </div>
+  </div>
+
+  <!-- Speed -->
+  <div class="panel-section">
+    <div class="section-label">Animation Speed</div>
+    <div class="slider-wrap">
+      <span class="slider-label">0.25×</span>
+      <input type="range" id="speed-slider" min="1" max="16" value="4" oninput="updateSpeed()">
+      <span class="slider-label">4×</span>
+      <span class="speed-val" id="speed-val">1×</span>
+    </div>
+  </div>
+
+  <!-- Status + Step counter -->
+  <div class="panel-section">
+    <div class="status-bar">
+      <div class="status-dot s-idle" id="status-dot"></div>
+      <span class="status-text" id="status-text">Idle — Load a dataset to begin</span>
+      <span class="step-counter" id="step-counter">0 / 0</span>
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="pb-controls">
+      <button class="btn btn-amber" id="btn-build" onclick="buildSteps()">⚙ Build Steps</button>
+      <button class="btn btn-ghost" id="btn-step" onclick="stepForward()" disabled>▶ Step</button>
+      <button class="btn btn-green" id="btn-play" onclick="playAnim()" disabled>▶▶ Play</button>
+      <button class="btn btn-ghost" id="btn-pause" onclick="pauseAnim()" disabled>⏸ Pause</button>
+      <button class="btn btn-red btn-sm" id="btn-reset" onclick="resetAnim()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="panel-section">
+    <div class="section-label">Live Statistics</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-label">Distance Compares</div>
+        <div class="stat-box-val val-amber" id="stat-comparisons">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Recursive Calls</div>
+        <div class="stat-box-val val-cyan" id="stat-recursions">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Best Distance</div>
+        <div class="stat-box-val val-green" id="stat-bestdist">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-label">Points (n)</div>
+        <div class="stat-box-val val-purple" id="stat-n">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pseudocode -->
+  <div class="panel-section">
+    <div class="section-label">Pseudocode</div>
+    <div id="pseudo-panel"></div>
+  </div>
+
+  <!-- Step Explanation -->
+  <div class="panel-section">
+    <div class="section-label">Step Explanation</div>
+    <div id="step-explanation">Load a dataset and press <strong>Build Steps</strong> to begin.</div>
+  </div>
+
+  <!-- History Table -->
+  <div class="panel-section">
+    <div class="section-label">Step History</div>
+    <div id="history-table-wrap">
+      <table id="history-table">
+        <thead><tr><th>#</th><th>Type</th><th>Action</th></tr></thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="panel-section">
+    <div class="section-label">Legend</div>
+    <div class="legend-grid">
+      <div class="legend-item"><div class="legend-dot" style="background:#4f9eff"></div> Default Point</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff4f6a"></div> Comparing Pair</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00e5a0"></div> Closest Pair</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffe066"></div> Strip Point</div>
+      <div class="legend-item"><div class="legend-line" style="background:#4f9eff;height:2px"></div> Dividing Line</div>
+      <div class="legend-item"><div class="legend-line" style="background:#ffe066;height:2px;border-top:1px dashed #ffe066"></div> Strip Edge</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#9b72ff;border-radius:2px"></div> Left Subset</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff8c00;border-radius:2px"></div> Right Subset</div>
+    </div>
+  </div>
+
+  <!-- Educational Sections -->
+  <div class="panel-section">
+    <div class="section-label">Educational Content</div>
+
+    <div class="edu-section">
+      <div class="edu-header" onclick="toggleEdu(this)">
+        <span>📖 Overview: What is this problem?</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="edu-body">
+        <p><strong>The Closest Pair of Points</strong> problem asks: given n points in a plane, find the two points with the smallest Euclidean distance between them.</p>
+        <p><strong>Why it matters:</strong> Used in collision detection, clustering, geographic information systems, computer graphics, and molecular modeling.</p>
+        <p><strong>High-level idea (D&C):</strong> Split points by median x-coordinate. Recursively find the closest pair in each half. Then check points near the dividing line (the "strip") for possible closer pairs.</p>
+      </div>
+    </div>
+
+    <div class="edu-section">
+      <div class="edu-header" onclick="toggleEdu(this)">
+        <span>🧮 Key Concepts</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="edu-body">
+        <p><strong>Divide &amp; Conquer:</strong> Split → Solve sub-problems → Combine. The key insight is the strip optimization.</p>
+        <p><strong>Strip optimization:</strong> After finding δ = min(d_left, d_right), we only check points within distance δ of the midline. Within the strip, for each point you only need to check at most <strong>7 neighbors</strong> sorted by y-coordinate. This is because at most 8 points can fit in a 2δ × δ rectangle.</p>
+        <p><strong>Common mistakes:</strong></p>
+        <ul>
+          <li>Forgetting the strip check entirely</li>
+          <li>Checking too many strip neighbors (more than 7)</li>
+          <li>Not sorting by x before dividing</li>
+          <li>Using brute force in the strip (defeats the purpose)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="edu-section">
+      <div class="edu-header" onclick="toggleEdu(this)">
+        <span>📝 Worked Example</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="edu-body">
+        <p><strong>Step 1:</strong> Sort points by x-coordinate: (1,1), (2,3), (4,2), (5,5), (7,1), (9,4)</p>
+        <p><strong>Step 2:</strong> Divide at median: Left = {(1,1),(2,3),(4,2)}, Right = {(5,5),(7,1),(9,4)}</p>
+        <p><strong>Step 3:</strong> Recursively solve: dL = dist((1,1),(2,3)) = 2.24, dR = dist((7,1),(9,4)) = 3.61</p>
+        <p><strong>Step 4:</strong> δ = min(2.24, 3.61) = 2.24. Build strip: all points within x ∈ [4-2.24, 4+2.24]</p>
+        <p><strong>Step 5:</strong> Check strip pairs. The final answer is the minimum of dL, dR, and any strip improvement.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /left-panel -->
+
+<!-- ╔══════════════════════════════════════╗
+     ║          RIGHT VISUALIZATION         ║
+     ╚══════════════════════════════════════╝ -->
+<div id="right-panel">
+
+  <div class="right-tabs">
+    <button class="right-tab active" onclick="switchRightTab('viz', this)">Visualization</button>
+    <button class="right-tab" onclick="switchRightTab('complexity', this)">Complexity Analysis</button>
+    <button class="right-tab" onclick="switchRightTab('sorting', this)">Sorting &amp; Strip</button>
+    <button class="right-tab" onclick="switchRightTab('tree', this)">Recursion Tree</button>
+  </div>
+
+  <!-- ── VIZ TAB ── -->
+  <div id="tab-viz" class="tab-content active">
+    <div id="viz-area">
+      <svg id="main-svg" viewBox="0 0 800 550" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </div>
+
+  <!-- ── COMPLEXITY TAB ── -->
+  <div id="tab-complexity" class="tab-content">
+    <div id="complexity-tab">
+      <div class="complexity-header">
+        <h2>CLO-1: Complexity Analysis</h2>
+        <p>Compare Brute Force O(n²) vs Divide &amp; Conquer O(n log n) theoretical and measured operations.</p>
+      </div>
+
+      <div class="recurrence-box">
+        <div class="rec-title">DIVIDE &amp; CONQUER RECURRENCE</div>
+        <div class="rec-formula">T(n) = 2T(n/2) + O(n)</div>
+        <div class="rec-desc">→ Solves to O(n log n) by the Master Theorem (Case 2)</div>
+      </div>
+
+      <div class="complexity-controls">
+        <span class="n-label">Input size n =</span>
+        <input type="range" id="n-size-slider" min="4" max="200" value="20" oninput="updateComplexityGraph()">
+        <span class="n-val" id="n-size-val">20</span>
+        <button class="btn btn-amber btn-sm" onclick="runComplexityBenchmark()">⚡ Benchmark</button>
+      </div>
+
+      <svg id="complexity-svg" viewBox="0 0 700 350" preserveAspectRatio="xMidYMid meet" height="350"></svg>
+
+      <table class="complexity-table" style="margin-top:16px">
+        <thead>
+          <tr><th>n</th><th class="c-dc">D&C ops (theory)</th><th class="c-bf">BF ops (theory)</th><th class="c-dc">D&C (measured)</th><th class="c-bf">BF (measured)</th><th class="c-ratio">Speedup</th></tr>
+        </thead>
+        <tbody id="complexity-tbody"></tbody>
+      </table>
+
+      <div class="worst-case-box" style="margin-top:16px">
+        <strong>⚠ Worst Case for Brute Force:</strong> When all points are collinear (e.g., on x-axis), brute force still checks all n(n-1)/2 pairs. For n=100, that's 4,950 comparisons. D&C still only needs ~n log n ≈ 664 operations.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SORTING TAB ── -->
+  <div id="tab-sorting" class="tab-content">
+    <div id="sorting-tab">
+      <h2>CLO-2: Sorting &amp; Strip Searching</h2>
+
+      <div class="sort-explanation">
+        <p>The D&C algorithm relies on <strong>two critical sorting steps</strong>:</p>
+        <p><strong>1. Sort by x-coordinate</strong> — enables the divide step. Without this, we cannot find the median and split points correctly.</p>
+        <p><strong>2. Sort strip by y-coordinate</strong> — enables efficient strip checking. By sorting by y, each point only checks the next 7 neighbors (points within δ in y-direction).</p>
+        <p><strong>What if sorting is removed?</strong> We'd need to check all points in the strip against each other — O(n²) in the worst case, defeating the purpose of D&C entirely. The algorithm degrades to O(n² log n).</p>
+      </div>
+
+      <svg id="sorting-svg" viewBox="0 0 700 280" height="280" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <div class="sort-rule-box">
+        <div class="rule-title">THE 7-COMPARISON RULE</div>
+        <p>In the strip of width 2δ, sort points by y-coordinate. For each point, check only the next 7 points above it. Why 7? In a 2δ × δ rectangle, you can pack at most 8 points (4 in each δ × δ half) while maintaining all pairwise distances ≥ δ. So you never need more than 7 comparisons per point. <strong>This keeps the strip check at O(n).</strong></p>
+      </div>
+
+      <div class="sort-explanation" style="margin-top:0">
+        <p><strong>Without x-sort:</strong> Cannot divide correctly → O(n²) or worse</p>
+        <p><strong>Without y-sort in strip:</strong> Must compare all strip pairs → O(n²) strip check</p>
+        <p><strong>With both sorts:</strong> Strip check = O(n), total = O(n log n) ✓</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TREE TAB ── -->
+  <div id="tab-tree" class="tab-content">
+    <div id="tree-tab">
+      <h2>CLO-3: Recursion Tree</h2>
+      <div class="sort-explanation">
+        <p>The D&C algorithm recursively splits the problem. Each node represents a subproblem. <strong>Leaf nodes</strong> use brute force (≤3 points). <strong>Internal nodes</strong> combine results from two children plus the strip check.</p>
+      </div>
+      <svg id="tree-svg" viewBox="0 0 700 400" height="400" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="tree-legend">
+        <div class="tree-legend-item"><div class="tl-dot" style="background:var(--purple)"></div>Internal Node (D&C)</div>
+        <div class="tree-legend-item"><div class="tl-dot" style="background:var(--amber)"></div>Leaf (Brute Force ≤3 pts)</div>
+        <div class="tree-legend-item"><div class="tl-dot" style="background:var(--green)"></div>Active Node</div>
+        <div class="tree-legend-item"><div class="tl-dot" style="background:var(--blue)"></div>Completed Node</div>
+      </div>
+      <div class="sort-explanation" style="margin-top:8px">
+        <p><strong>Why D&C is better than brute force:</strong> Brute force checks all n(n-1)/2 pairs = O(n²). D&C splits the problem in half each time, giving depth log(n). At each level, O(n) work is done. Total: O(n log n). For n=64: BF needs 2016 comparisons; D&C needs ~384.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /right-panel -->
+</div><!-- /app-main -->
+
+<!-- ══════════════════════════ JAVASCRIPT ══════════════════════════ -->
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════
+//  GLOBAL STATE
+// ════════════════════════════════════════════════════
+const SVG_W = 800, SVG_H = 550;
+const PAD = 50;
+
+let currentAlgo = 'dc';
+let points = [];
+let customPoints = [];
+let steps = [];
+let currentStepIdx = -1;
+let animTimer = null;
+let isPlaying = false;
+let speedMultiplier = 1;
+let treeNodes = [], treeEdges = [];
+let dcCompCount = 0, bfCompCount = 0, recursionCount = 0;
+let globalBestDist = Infinity, globalBestPair = null;
+let activePseudoLine = -1;
+
+// ════════════════════════════════════════════════════
+//  PRESETS
+// ════════════════════════════════════════════════════
+const PRESETS = [
+  { name: 'Simple', pts: [[1,1],[2,4],[5,2],[6,6],[8,3],[3,7],[9,1],[7,5]] },
+  { name: 'Cluster', pts: [[1,2],[1.5,2.5],[2,2],[4,5],[4.5,4.8],[5,5.2],[8,1],[8.5,1.5],[9,1],[3,3],[6,7],[7,2]] },
+  { name: 'Worst Case', pts: [[1,5],[2,5],[3,5],[4,5],[5,5],[6,5],[7,5],[8,5],[9,5],[5.1,5]] },
+  { name: 'Random', pts: Array.from({length:14}, (_,i) => [
+    parseFloat((Math.random()*8+1).toFixed(2)),
+    parseFloat((Math.random()*8+1).toFixed(2))
+  ])}
+];
+
+// ════════════════════════════════════════════════════
+//  PSEUDOCODE DEFINITIONS
+// ════════════════════════════════════════════════════
+const DC_PSEUDO = [
+  { line: 1, code: '<span class="ps-kw">function</span> <span class="ps-fn">closestPair</span>(P):', tip: 'Entry point: takes array of points P' },
+  { line: 2, code: '  n ← |P|', tip: 'Count the number of points' },
+  { line: 3, code: '  <span class="ps-kw">if</span> n ≤ <span class="ps-num2">3</span>: <span class="ps-kw">return</span> <span class="ps-fn">bruteForce</span>(P)', tip: 'Base case: ≤3 points, use brute force directly' },
+  { line: 4, code: '  <span class="ps-fn">sortByX</span>(P)  <span class="ps-cm">// O(n log n)</span>', tip: 'Sort all points by x-coordinate — critical for correct division' },
+  { line: 5, code: '  mid ← P[n/2].x  <span class="ps-cm">// median x</span>', tip: 'Find the median x-value to use as the dividing line' },
+  { line: 6, code: '  L ← P[0..n/2],  R ← P[n/2+1..n]', tip: 'Split into left and right halves by median x' },
+  { line: 7, code: '  dL ← <span class="ps-fn">closestPair</span>(L)  <span class="ps-cm">// recurse left</span>', tip: 'Recursively find closest pair in left half' },
+  { line: 8, code: '  dR ← <span class="ps-fn">closestPair</span>(R)  <span class="ps-cm">// recurse right</span>', tip: 'Recursively find closest pair in right half' },
+  { line: 9, code: '  δ ← <span class="ps-fn">min</span>(dL, dR)', tip: 'δ (delta) is the best distance found so far' },
+  { line: 10, code: '  strip ← {p ∈ P : |p.x − mid| < δ}', tip: 'Collect all points within δ of the dividing line' },
+  { line: 11, code: '  <span class="ps-fn">sortByY</span>(strip)  <span class="ps-cm">// O(n)</span>', tip: 'Sort strip points by y — enables the 7-comparison rule' },
+  { line: 12, code: '  <span class="ps-kw">for</span> i <span class="ps-kw">in</span> 0..strip.length:', tip: 'Check each point in the strip' },
+  { line: 13, code: '    <span class="ps-kw">for</span> j <span class="ps-kw">in</span> i+1..min(i+<span class="ps-num2">7</span>,strip.length):', tip: 'Only compare with next 7 neighbors (mathematical guarantee)' },
+  { line: 14, code: '      δ ← <span class="ps-fn">min</span>(δ, <span class="ps-fn">dist</span>(strip[i], strip[j]))', tip: 'Update δ if a closer pair is found in the strip' },
+  { line: 15, code: '  <span class="ps-kw">return</span> δ', tip: 'Return the overall minimum distance' },
+];
+
+const BF_PSEUDO = [
+  { line: 1, code: '<span class="ps-kw">function</span> <span class="ps-fn">bruteForce</span>(P):', tip: 'Check every pair of points' },
+  { line: 2, code: '  best ← ∞', tip: 'Initialize best distance to infinity' },
+  { line: 3, code: '  <span class="ps-kw">for</span> i <span class="ps-kw">in</span> 0..n-1:', tip: 'Outer loop over all points' },
+  { line: 4, code: '    <span class="ps-kw">for</span> j <span class="ps-kw">in</span> i+1..n:', tip: 'Inner loop — only pairs (i<j) to avoid duplicates' },
+  { line: 5, code: '      d ← <span class="ps-fn">dist</span>(P[i], P[j])', tip: 'Compute Euclidean distance between P[i] and P[j]' },
+  { line: 6, code: '      <span class="ps-kw">if</span> d < best:', tip: 'Check if this is a new minimum' },
+  { line: 7, code: '        best ← d', tip: 'Update the best distance' },
+  { line: 8, code: '  <span class="ps-kw">return</span> best', tip: 'Return minimum distance found' },
+];
+
+// ════════════════════════════════════════════════════
+//  INITIALIZATION
+// ════════════════════════════════════════════════════
+function init() {
+  buildPseudoPanel();
+  loadPreset(0);
+  updateComplexityGraph();
+  drawSortingDiagram();
+}
+
+function buildPseudoPanel() {
+  const pseudo = currentAlgo === 'dc' ? DC_PSEUDO : BF_PSEUDO;
+  const el = document.getElementById('pseudo-panel');
+  el.innerHTML = pseudo.map(p => `
+    <div class="ps-line" id="ps-${p.line}" data-line="${p.line}">
+      <span class="ps-num">${String(p.line).padStart(2,'0')}</span>
+      <span class="ps-code">${p.code}</span>
+      <div class="ps-tooltip">${p.tip}</div>
+    </div>
+  `).join('');
+}
+
+function selectAlgo(algo) {
+  currentAlgo = algo;
+  document.getElementById('tab-dc').classList.toggle('active', algo === 'dc');
+  document.getElementById('tab-bf').classList.toggle('active', algo === 'bf');
+  buildPseudoPanel();
+  resetAnim();
+}
+
+// ════════════════════════════════════════════════════
+//  POINT MANAGEMENT
+// ════════════════════════════════════════════════════
+function loadPreset(idx) {
+  // Regenerate random preset each time
+  if (idx === 3) {
+    PRESETS[3].pts = Array.from({length:14}, () => [
+      parseFloat((Math.random()*8+1).toFixed(2)),
+      parseFloat((Math.random()*8+1).toFixed(2))
+    ]);
+  }
+  points = PRESETS[idx].pts.map((p,i) => ({ x: p[0], y: p[1], id: i }));
+  customPoints = [...points];
+  updatePointTags();
+  document.getElementById('stat-n').textContent = points.length;
+  resetAnim();
+  drawInitialPoints();
+}
+
+function addCustomPoint() {
+  const x = parseFloat(document.getElementById('pt-x').value);
+  const y = parseFloat(document.getElementById('pt-y').value);
+  if (isNaN(x) || isNaN(y)) { alert('Enter valid x and y values.'); return; }
+  if (x < 0 || x > 10 || y < 0 || y > 10) { alert('Use values between 0 and 10.'); return; }
+  customPoints.push({ x, y, id: customPoints.length });
+  document.getElementById('pt-x').value = '';
+  document.getElementById('pt-y').value = '';
+  updatePointTags();
+}
+
+function clearCustomPoints() { customPoints = []; updatePointTags(); }
+
+function applyCustomPoints() {
+  if (customPoints.length < 2) { alert('Add at least 2 points.'); return; }
+  points = customPoints.map((p,i) => ({...p, id:i}));
+  document.getElementById('stat-n').textContent = points.length;
+  resetAnim();
+  drawInitialPoints();
+}
+
+function updatePointTags() {
+  const el = document.getElementById('point-tags');
+  el.innerHTML = customPoints.map((p,i) => `
+    <span class="point-tag">(${p.x},${p.y})<span class="del-pt" onclick="removeCustomPoint(${i})">×</span></span>
+  `).join('');
+}
+
+function removeCustomPoint(i) {
+  customPoints.splice(i, 1);
+  customPoints.forEach((p,i) => p.id = i);
+  updatePointTags();
+}
+
+// ════════════════════════════════════════════════════
+//  COORDINATE TRANSFORMS
+// ════════════════════════════════════════════════════
+function toSvgX(x) { return PAD + (x / 10) * (SVG_W - 2*PAD); }
+function toSvgY(y) { return SVG_H - PAD - (y / 10) * (SVG_H - 2*PAD); }
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+// ════════════════════════════════════════════════════
+//  ALGORITHM: BUILD STEPS
+// ════════════════════════════════════════════════════
+function buildSteps() {
+  if (points.length < 2) { alert('Need at least 2 points.'); return; }
+  resetAnim(false);
+  steps = [];
+  treeNodes = [];
+  treeEdges = [];
+  dcCompCount = 0;
+  bfCompCount = 0;
+  recursionCount = 0;
+  globalBestDist = Infinity;
+  globalBestPair = null;
+
+  if (currentAlgo === 'dc') {
+    const sorted = [...points].sort((a,b) => a.x - b.x).map((p,i) => ({...p, sortIdx:i}));
+    steps.push({ type: 'sort', pts: sorted, pseudo: 4, desc: `Sort ${sorted.length} points by x-coordinate: ${sorted.map(p=>`(${p.x},${p.y})`).join(' → ')}`, category: 'div' });
+    buildDCSteps(sorted, 0, sorted.length-1, null, 0);
+  } else {
+    buildBFSteps([...points]);
+  }
+
+  steps.push({ type: 'done', pseudo: -1,
+    desc: `✓ Algorithm complete! Closest pair: (${globalBestPair?.[0]?.x},${globalBestPair?.[0]?.y}) and (${globalBestPair?.[1]?.x},${globalBestPair?.[1]?.y}), distance = ${globalBestDist.toFixed(4)}`,
+    category: 'found', bestPair: globalBestPair, bestDist: globalBestDist });
+
+  document.getElementById('step-counter').textContent = `0 / ${steps.length}`;
+  document.getElementById('btn-step').disabled = false;
+  document.getElementById('btn-play').disabled = false;
+  setStatus('ready', 'Ready — click Step or Play');
+  drawInitialPoints();
+  drawTreeSvg();
+}
+
+let nodeIdCounter = 0;
+function buildDCSteps(pts, lo, hi, parentNodeId, depth) {
+  recursionCount++;
+  const nid = nodeIdCounter++;
+  const nodeLabel = `n=${hi-lo+1}`;
+  treeNodes.push({ id: nid, label: nodeLabel, lo, hi, depth, parentId: parentNodeId, type: (hi-lo+1)<=3?'leaf':'internal', done: false });
+  if (parentNodeId !== null) treeEdges.push({ from: parentNodeId, to: nid });
+
+  if (hi - lo < 1) {
+    // Only 1 point, return
+    const d = Infinity;
+    treeNodes[treeNodes.findIndex(n=>n.id===nid)].done = true;
+    return { d: Infinity, pair: null };
+  }
+
+  if (hi - lo <= 2) {
+    // Brute force base case
+    steps.push({ type:'bf_base', pts: pts.slice(lo,hi+1), lo, hi, pseudo: 3, nid,
+      desc: `Base case: ${hi-lo+1} points [${pts.slice(lo,hi+1).map(p=>`(${p.x},${p.y})`).join(', ')}] — using brute force`, category:'bf' });
+    let bfBest = Infinity, bfPair = null;
+    for (let i = lo; i <= hi; i++) {
+      for (let j = i+1; j <= hi; j++) {
+        bfCompCount++;
+        const d = dist(pts[i], pts[j]);
+        if (d < bfBest) { bfBest = d; bfPair = [pts[i], pts[j]]; }
+        if (d < globalBestDist) { globalBestDist = d; globalBestPair = [pts[i], pts[j]]; }
+        steps.push({ type:'bf_compare', p1: pts[i], p2: pts[j], d, pseudo: currentAlgo==='dc'?3:5,
+          desc: `BF compare (${pts[i].x},${pts[i].y}) and (${pts[j].x},${pts[j].y}): distance = ${d.toFixed(4)}${d<bfBest+1e-12?' ✓ new best':''}`,
+          category:'bf', nid,
+          bestPair: globalBestPair ? [...globalBestPair] : null,
+          bestDist: globalBestDist < Infinity ? globalBestDist : null });
+      }
+    }
+    treeNodes[treeNodes.findIndex(n=>n.id===nid)].done = true;
+    treeNodes[treeNodes.findIndex(n=>n.id===nid)].result = bfBest;
+    return { d: bfBest, pair: bfPair };
+  }
+
+  // Divide
+  const mid = Math.floor((lo + hi) / 2);
+  const midX = pts[mid].x;
+  steps.push({ type:'divide', lo, hi, mid, midX, pts: pts.slice(lo,hi+1), pseudo: 5, nid,
+    desc: `Divide: ${hi-lo+1} points split at x=${midX}. Left: [${lo}..${mid}], Right: [${mid+1}..${hi}]`, category:'div' });
+
+  // Recurse left
+  steps.push({ type:'recurse_left', lo, hi, mid, midX, pts, pseudo: 7, nid,
+    desc: `→ Recurse LEFT half: points ${lo} to ${mid} (${mid-lo+1} points)`, category:'recurse' });
+  const leftResult = buildDCSteps(pts, lo, mid, nid, depth+1);
+
+  // Recurse right
+  steps.push({ type:'recurse_right', lo, hi, mid, midX, pts, pseudo: 8, nid,
+    desc: `→ Recurse RIGHT half: points ${mid+1} to ${hi} (${hi-mid} points)`, category:'recurse' });
+  const rightResult = buildDCSteps(pts, mid+1, hi, nid, depth+1);
+
+  // Combine
+  const deltaD = Math.min(leftResult.d===Infinity?1e9:leftResult.d, rightResult.d===Infinity?1e9:rightResult.d);
+  const bestSoFar = deltaD;
+  steps.push({ type:'combine', lo, hi, mid, midX, delta: bestSoFar, dL: leftResult.d, dR: rightResult.d, pts, pseudo: 9, nid,
+    desc: `Combine: dL=${leftResult.d===Infinity?'∞':leftResult.d.toFixed(4)}, dR=${rightResult.d===Infinity?'∞':rightResult.d.toFixed(4)}, δ = min = ${bestSoFar.toFixed(4)}`,
+    category:'div' });
+
+  // Build strip
+  const strip = pts.slice(lo, hi+1).filter(p => Math.abs(p.x - midX) < bestSoFar);
+  strip.sort((a,b) => a.y - b.y);
+  steps.push({ type:'strip_build', lo, hi, mid, midX, delta: bestSoFar, strip, pts, pseudo: 10, nid,
+    desc: `Build strip: ${strip.length} points within δ=${bestSoFar.toFixed(4)} of midline x=${midX}`, category:'strip' });
+  steps.push({ type:'strip_sort', lo, hi, mid, midX, delta: bestSoFar, strip, pts, pseudo: 11, nid,
+    desc: `Sort strip by y-coordinate: [${strip.map(p=>`(${p.x},${p.y})`).join(', ')}]`, category:'strip' });
+
+  // Strip comparisons
+  let stripBest = bestSoFar, stripPair = null;
+  for (let i = 0; i < strip.length; i++) {
+    for (let j = i+1; j < Math.min(i+8, strip.length); j++) {
+      if (strip[j].y - strip[i].y >= stripBest) break;
+      dcCompCount++;
+      const sd = dist(strip[i], strip[j]);
+      const isNewBestStrip = sd < stripBest;
+      if (isNewBestStrip) {
+        stripBest = sd;
+        stripPair = [strip[i], strip[j]];
+        if (sd < globalBestDist) { globalBestDist = sd; globalBestPair = [strip[i], strip[j]]; }
+      }
+      steps.push({ type:'strip_compare', p1:strip[i], p2:strip[j], sd, delta:stripBest,
+        lo, hi, mid, midX, strip, pts, pseudo: 14, nid,
+        desc: `Strip check: (${strip[i].x},${strip[i].y}) ↔ (${strip[j].x},${strip[j].y}): dist=${sd.toFixed(4)}${isNewBestStrip?' ✓ new best!':''}`,
+        category: isNewBestStrip?'found':'strip',
+        bestPair: globalBestPair ? [...globalBestPair] : null,
+        bestDist: globalBestDist < Infinity ? globalBestDist : null });
+    }
+  }
+
+  const finalD = Math.min(bestSoFar, stripBest);
+  const finalPair = stripBest < bestSoFar ? stripPair : (leftResult.d <= rightResult.d ? leftResult.pair : rightResult.pair);
+  if (finalD < globalBestDist) { globalBestDist = finalD; globalBestPair = finalPair; }
+
+  steps.push({ type:'return', lo, hi, mid, midX, d: finalD, pts, pseudo: 15, nid,
+    desc: `Return from depth ${depth}: best distance = ${finalD.toFixed(4)}`, category:'div' });
+
+  treeNodes[treeNodes.findIndex(n=>n.id===nid)].done = true;
+  treeNodes[treeNodes.findIndex(n=>n.id===nid)].result = finalD;
+  return { d: finalD, pair: finalPair };
+}
+
+function buildBFSteps(pts) {
+  steps.push({ type:'bf_init', pts, pseudo:2, desc:`Initialize: checking all pairs among ${pts.length} points. Total pairs = ${pts.length*(pts.length-1)/2}`, category:'bf' });
+  let best = Infinity, bestPair = null;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i+1; j < pts.length; j++) {
+      bfCompCount++;
+      const d = dist(pts[i], pts[j]);
+      const isNewMinBF = d < best;
+      if (isNewMinBF) { best = d; bestPair = [pts[i], pts[j]]; globalBestDist = d; globalBestPair = bestPair; }
+      steps.push({ type:'bf_compare', p1:pts[i], p2:pts[j], d, best, pts, pseudo:5,
+        desc:`Comparing (${pts[i].x},${pts[i].y}) and (${pts[j].x},${pts[j].y}): distance = ${d.toFixed(4)}${isNewMinBF?` ✓ new minimum (was ${best===d?(bestPair?d.toFixed(4):'∞'):best.toFixed(4)})`:''}`,
+        category: isNewMinBF?'found':'bf',
+        bestPair: globalBestPair ? [...globalBestPair] : null,
+        bestDist: globalBestDist < Infinity ? globalBestDist : null });
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  ANIMATION ENGINE
+// ════════════════════════════════════════════════════
+function stepForward() {
+  if (currentStepIdx >= steps.length - 1) { pauseAnim(); setStatus('done','Done!'); return; }
+  currentStepIdx++;
+  applyStep(currentStepIdx);
+  document.getElementById('step-counter').textContent = `${currentStepIdx+1} / ${steps.length}`;
+}
+
+function applyStep(idx) {
+  const step = steps[idx];
+  if (!step) return;
+
+  // BUG 2 FIX: Restore globalBestDist/globalBestPair from the step's snapshot so
+  // that jumping back and replaying never causes Infinity to bleed through.
+  if (step.bestPair && step.bestDist !== null && step.bestDist !== undefined) {
+    globalBestDist = step.bestDist;
+    globalBestPair = step.bestPair;
+  }
+
+  // Update pseudocode highlight
+  highlightPseudo(step.pseudo);
+
+  // Update explanation
+  const ex = document.getElementById('step-explanation');
+  ex.innerHTML = formatExplanation(step.desc);
+  ex.style.borderLeftColor = categoryColor(step.category);
+
+  // Update stats
+  document.getElementById('stat-comparisons').textContent = dcCompCount + bfCompCount;
+  document.getElementById('stat-recursions').textContent = recursionCount;
+  if (globalBestDist < Infinity) {
+    document.getElementById('stat-bestdist').textContent = globalBestDist.toFixed(4);
+  }
+
+  // Add to history
+  addHistory(idx, step);
+
+  // Draw visualization
+  drawStep(step, idx);
+
+  // Update tree
+  drawTreeSvg(step.nid);
+}
+
+function formatExplanation(desc) {
+  return desc
+    .replace(/\([\d.,]+,[\d.,]+\)/g, m => `<strong>${m}</strong>`)
+    .replace(/distance = ([\d.]+)/g, 'distance = <em>$1</em>')
+    .replace(/dist=([\d.]+)/g, 'dist=<em>$1</em>')
+    .replace(/✓ new (best|minimum)[^<]*/g, m => `<em>✓ ${m.slice(2)}</em>`);
+}
+
+function highlightPseudo(line) {
+  document.querySelectorAll('.ps-line').forEach(el => el.classList.remove('active'));
+  if (line < 0) return;
+  const el = document.getElementById(`ps-${line}`);
+  if (el) {
+    el.classList.add('active');
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+function categoryColor(cat) {
+  const map = { div:'#4f9eff', bf:'#ffb347', strip:'#ffe066', found:'#00e5a0', recurse:'#9b72ff' };
+  return map[cat] || '#4a6080';
+}
+
+function addHistory(idx, step) {
+  const tbody = document.getElementById('history-tbody');
+  // Keep last 30
+  while (tbody.rows.length >= 30) tbody.deleteRow(0);
+  const tr = document.createElement('tr');
+  tr.className = `h-${step.category}`;
+  tr.dataset.stepIdx = idx;
+  tr.innerHTML = `<td>${idx+1}</td><td>${step.type}</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${step.desc.substring(0,60)}</td>`;
+  tr.onclick = () => jumpToStep(idx);
+  // Mark current
+  document.querySelectorAll('#history-tbody tr').forEach(r => r.classList.remove('h-current'));
+  tr.classList.add('h-current');
+  tbody.appendChild(tr);
+  tbody.parentElement.scrollTop = tbody.parentElement.scrollHeight;
+}
+
+function jumpToStep(idx) {
+  pauseAnim();
+  // Rebuild from scratch
+  currentStepIdx = -1;
+  document.getElementById('stat-comparisons').textContent = '0';
+  document.getElementById('stat-recursions').textContent = '0';
+  document.getElementById('stat-bestdist').textContent = '—';
+  dcCompCount = 0; bfCompCount = 0; recursionCount = 0;
+  // BUG 2 FIX: Do NOT reset globalBestDist/globalBestPair here — they will be
+  // restored step-by-step from each step's bestDist/bestPair snapshot in applyStep.
+  globalBestDist = Infinity; globalBestPair = null;
+  document.getElementById('history-tbody').innerHTML = '';
+  // Re-apply steps up to idx; applyStep restores bestDist/bestPair from each step
+  for (let i = 0; i <= idx; i++) {
+    currentStepIdx = i;
+    applyStep(i);
+  }
+  document.getElementById('step-counter').textContent = `${idx+1} / ${steps.length}`;
+}
+
+function playAnim() {
+  if (currentStepIdx >= steps.length - 1) return;
+  isPlaying = true;
+  setStatus('playing','Playing...');
+  document.getElementById('btn-pause').disabled = false;
+  tick();
+}
+
+function tick() {
+  if (!isPlaying) return;
+  stepForward();
+  if (currentStepIdx < steps.length - 1) {
+    const delay = Math.round(600 / speedMultiplier);
+    animTimer = setTimeout(tick, delay);
+  } else {
+    isPlaying = false;
+    setStatus('done','Complete!');
+  }
+}
+
+function pauseAnim() {
+  isPlaying = false;
+  clearTimeout(animTimer);
+  if (steps.length > 0 && currentStepIdx < steps.length - 1) setStatus('paused','Paused');
+}
+
+function resetAnim(redraw=true) {
+  pauseAnim();
+  currentStepIdx = -1;
+  steps = [];
+  treeNodes = [];
+  treeEdges = [];
+  nodeIdCounter = 0;
+  dcCompCount = 0; bfCompCount = 0; recursionCount = 0;
+  globalBestDist = Infinity; globalBestPair = null;
+  document.getElementById('stat-comparisons').textContent = '0';
+  document.getElementById('stat-recursions').textContent = '0';
+  document.getElementById('stat-bestdist').textContent = '—';
+  document.getElementById('step-counter').textContent = '0 / 0';
+  document.getElementById('history-tbody').innerHTML = '';
+  document.getElementById('btn-step').disabled = true;
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-pause').disabled = true;
+  highlightPseudo(-1);
+  document.getElementById('step-explanation').innerHTML = 'Load a dataset and press <strong>Build Steps</strong> to begin.';
+  setStatus('idle','Idle — load a dataset');
+  if (redraw) drawInitialPoints();
+  drawTreeSvg();
+}
+
+function updateSpeed() {
+  const val = parseInt(document.getElementById('speed-slider').value);
+  // Map 1-16 to 0.25x-4x
+  speedMultiplier = val / 4;
+  document.getElementById('speed-val').textContent = speedMultiplier + '×';
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('status-dot');
+  dot.className = `status-dot s-${state}`;
+  document.getElementById('status-text').textContent = text;
+}
+
+// ════════════════════════════════════════════════════
+//  MAIN SVG DRAWING
+// ════════════════════════════════════════════════════
+function svgEl(tag, attrs, children) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (children) children.forEach(c => typeof c === 'string' ? el.appendChild(document.createTextNode(c)) : el.appendChild(c));
+  return el;
+}
+function s(tag, attrs={}, ...children) { return svgEl(tag, attrs, children.length?children:null); }
+
+function getSvg() { return document.getElementById('main-svg'); }
+
+function drawGrid(svg) {
+  const g = s('g', { id:'grid', opacity:'1' });
+  for (let i=0; i<=10; i++) {
+    const x = toSvgX(i), y = toSvgY(i);
+    g.appendChild(s('line', { x1:x, y1:PAD, x2:x, y2:SVG_H-PAD, stroke:'#13192a', 'stroke-width':'1' }));
+    g.appendChild(s('line', { x1:PAD, y1:y, x2:SVG_W-PAD, y2:y, stroke:'#13192a', 'stroke-width':'1' }));
+    // Labels
+    if (i%2===0) {
+      g.appendChild(s('text', { x:x, y:SVG_H-PAD+14, 'text-anchor':'middle', fill:'#2d4060', 'font-family':'IBM Plex Mono', 'font-size':'9' }, String(i)));
+      g.appendChild(s('text', { x:PAD-12, y:y+3, 'text-anchor':'middle', fill:'#2d4060', 'font-family':'IBM Plex Mono', 'font-size':'9' }, String(i)));
+    }
+  }
+  // Axes
+  g.appendChild(s('line', { x1:PAD, y1:PAD, x2:PAD, y2:SVG_H-PAD, stroke:'#1c2535', 'stroke-width':'1.5' }));
+  g.appendChild(s('line', { x1:PAD, y1:SVG_H-PAD, x2:SVG_W-PAD, y2:SVG_H-PAD, stroke:'#1c2535', 'stroke-width':'1.5' }));
+  return g;
+}
+
+function drawInitialPoints() {
+  const svg = getSvg();
+  svg.innerHTML = '';
+  svg.appendChild(drawGrid(svg));
+
+  // Points
+  const pg = s('g', { id:'points-g' });
+  points.forEach(p => {
+    pg.appendChild(s('circle', { cx:toSvgX(p.x), cy:toSvgY(p.y), r:'6', fill:'#4f9eff', stroke:'#0d1420', 'stroke-width':'1.5', class:'pt-circle' }));
+    pg.appendChild(s('text', { x:toSvgX(p.x)+9, y:toSvgY(p.y)-7, fill:'#4f9eff', 'font-family':'IBM Plex Mono', 'font-size':'9', class:'pt-label' }, `P${p.id}`));
+  });
+  svg.appendChild(pg);
+}
+
+function drawStep(step, stepIdx) {
+  const svg = getSvg();
+  svg.innerHTML = '';
+  svg.appendChild(drawGrid(svg));
+
+  const t = step.type;
+
+  // Background regions for left/right
+  if (['divide','recurse_left','recurse_right','combine','strip_build','strip_sort','strip_compare','return'].includes(t) && step.midX !== undefined) {
+    const mx = toSvgX(step.midX);
+    svg.appendChild(s('rect', { x:PAD, y:PAD, width:mx-PAD, height:SVG_H-2*PAD, fill:'rgba(79,158,255,0.04)' }));
+    svg.appendChild(s('rect', { x:mx, y:PAD, width:SVG_W-PAD-mx, height:SVG_H-2*PAD, fill:'rgba(255,140,0,0.04)' }));
+  }
+
+  // Strip region
+  if (['strip_build','strip_sort','strip_compare','return'].includes(t) && step.delta && step.midX !== undefined) {
+    const mx = toSvgX(step.midX);
+    const dpx = (step.delta / 10) * (SVG_W - 2*PAD);
+    svg.appendChild(s('rect', { x:mx-dpx, y:PAD, width:2*dpx, height:SVG_H-2*PAD, fill:'rgba(255,230,80,0.08)' }));
+    svg.appendChild(s('line', { x1:mx-dpx, y1:PAD, x2:mx-dpx, y2:SVG_H-PAD, stroke:'rgba(255,230,80,0.5)', 'stroke-width':'1', 'stroke-dasharray':'5,4' }));
+    svg.appendChild(s('line', { x1:mx+dpx, y1:PAD, x2:mx+dpx, y2:SVG_H-PAD, stroke:'rgba(255,230,80,0.5)', 'stroke-width':'1', 'stroke-dasharray':'5,4' }));
+    const dlbl = s('text', { x:mx+dpx+4, y:PAD+14, fill:'rgba(255,230,80,0.7)', 'font-family':'IBM Plex Mono', 'font-size':'9' }, `δ=${step.delta.toFixed(3)}`);
+    svg.appendChild(dlbl);
+  }
+
+  // Dividing line
+  if (step.midX !== undefined) {
+    const mx = toSvgX(step.midX);
+    svg.appendChild(s('line', { x1:mx, y1:PAD, x2:mx, y2:SVG_H-PAD, stroke:'rgba(79,158,255,0.8)', 'stroke-width':'1.5', 'stroke-dasharray':'8,5' }));
+    svg.appendChild(s('text', { x:mx+4, y:PAD+12, fill:'rgba(79,158,255,0.9)', 'font-family':'IBM Plex Mono', 'font-size':'9' }, `x=${step.midX}`));
+  }
+
+  // Comparison line
+  if ((t==='bf_compare' || t==='strip_compare') && step.p1 && step.p2) {
+    const a = step.p1, b = step.p2;
+    const isGood = t==='strip_compare'?(step.sd<step.delta):(step.d<(step.best||Infinity));
+    svg.appendChild(s('line', {
+      x1:toSvgX(a.x), y1:toSvgY(a.y), x2:toSvgX(b.x), y2:toSvgY(b.y),
+      stroke: isGood ? '#00e5a0' : '#ff4f6a',
+      'stroke-width':'2', 'stroke-dasharray': isGood?'':'4,3', opacity:'0.85'
+    }));
+    // Distance label at midpoint
+    const mx2 = (toSvgX(a.x)+toSvgX(b.x))/2;
+    const my2 = (toSvgY(a.y)+toSvgY(b.y))/2;
+    const dval = t==='strip_compare' ? step.sd : step.d;
+    svg.appendChild(s('rect', { x:mx2-22, y:my2-10, width:44, height:14, rx:'3', fill:'rgba(8,12,20,0.85)' }));
+    svg.appendChild(s('text', { x:mx2, y:my2, 'text-anchor':'middle', fill:isGood?'#00e5a0':'#ff4f6a', 'font-family':'IBM Plex Mono', 'font-size':'9' }, dval.toFixed(3)));
+  }
+
+  // Global best pair line — only render if this step has a confirmed best pair
+  const renderBestPair = step.bestPair && step.bestPair.length === 2 ? step.bestPair : null;
+  if (renderBestPair && !(t==='bf_compare'&&step.d<(step.best||Infinity))) {
+    const [a,b] = renderBestPair;
+    svg.appendChild(s('line', { x1:toSvgX(a.x), y1:toSvgY(a.y), x2:toSvgX(b.x), y2:toSvgY(b.y), stroke:'#00e5a0', 'stroke-width':'2', opacity:'0.5' }));
+  }
+
+  // Points
+  const compareIds = new Set([step.p1?.id, step.p2?.id].filter(x=>x!==undefined));
+  const stripIds = new Set((step.strip||[]).map(p=>p.id));
+
+  const pts = step.pts || points;
+  const leftSet = step.lo !== undefined ? new Set(pts.slice(step.lo, (step.mid||step.hi)+1).map(p=>p.id)) : new Set();
+  const rightSet = step.mid !== undefined ? new Set(pts.slice(step.mid+1, step.hi+1).map(p=>p.id)) : new Set();
+
+  points.forEach(p => {
+    let fill = '#4f9eff', r = 6, stroke = '#0d1420', sw = 1.5;
+    if (compareIds.has(p.id)) { fill = '#ff4f6a'; r = 8; stroke='#ff4f6a'; sw=2; }
+    else if (renderBestPair && renderBestPair.some(bp=>bp.id===p.id) && t==='done') { fill='#00e5a0'; r=9; stroke='#00e5a0'; sw=2; }
+    else if (renderBestPair && renderBestPair.some(bp=>bp.id===p.id)) { fill='#00e5a0'; r=7; stroke='#00e5a0'; sw=1.5; }
+    else if (stripIds.has(p.id)) { fill='#ffe066'; r=7; }
+    else if (leftSet.has(p.id)) { fill='#9b72ff'; }
+    else if (rightSet.has(p.id)) { fill='#ff8c00'; }
+
+    // Glow for active points
+    if (compareIds.has(p.id) || (renderBestPair&&renderBestPair.some(bp=>bp.id===p.id))) {
+      svg.appendChild(s('circle', { cx:toSvgX(p.x), cy:toSvgY(p.y), r:String(r+6), fill, opacity:'0.12' }));
+    }
+    svg.appendChild(s('circle', { cx:toSvgX(p.x), cy:toSvgY(p.y), r:String(r), fill, stroke, 'stroke-width':String(sw), class:'pt-circle' }));
+    svg.appendChild(s('text', { x:toSvgX(p.x)+r+4, y:toSvgY(p.y)-r, fill, 'font-family':'IBM Plex Mono', 'font-size':'9', class:'pt-label' }, `P${p.id}`));
+    svg.appendChild(s('text', { x:toSvgX(p.x)+r+4, y:toSvgY(p.y)-r+10, fill:'rgba(180,200,220,0.4)', 'font-family':'IBM Plex Mono', 'font-size':'8' }, `(${p.x},${p.y})`));
+  });
+
+  // Done banner
+  if (t === 'done') {
+    const doneDist = step.bestDist !== null && step.bestDist !== undefined ? step.bestDist : globalBestDist;
+    svg.appendChild(s('rect', { x:PAD, y:SVG_H-PAD-30, width:SVG_W-2*PAD, height:24, rx:'4', fill:'rgba(0,229,160,0.1)', stroke:'rgba(0,229,160,0.3)', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:SVG_W/2, y:SVG_H-PAD-14, 'text-anchor':'middle', fill:'#00e5a0', 'font-family':'IBM Plex Mono', 'font-size':'11', 'font-weight':'600' },
+      `✓ Closest Pair Found — Distance: ${doneDist < Infinity ? doneDist.toFixed(4) : '—'}`));
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  RECURSION TREE SVG
+// ════════════════════════════════════════════════════
+function drawTreeSvg(activeNid) {
+  const svg = document.getElementById('tree-svg');
+  svg.innerHTML = '';
+  if (treeNodes.length === 0) return;
+
+  const W = 700, H = 400;
+  const nodeW = 70, nodeH = 26;
+
+  // Layout: group by depth
+  const byDepth = {};
+  let maxDepth = 0;
+  treeNodes.forEach(n => {
+    if (!byDepth[n.depth]) byDepth[n.depth] = [];
+    byDepth[n.depth].push(n);
+    if (n.depth > maxDepth) maxDepth = n.depth;
+  });
+
+  const vGap = Math.min(60, (H-20) / (maxDepth+1));
+  const positions = {};
+
+  Object.keys(byDepth).forEach(d => {
+    const nodes = byDepth[d];
+    const n = nodes.length;
+    nodes.forEach((node, i) => {
+      positions[node.id] = {
+        x: (W / (n+1)) * (i+1),
+        y: 20 + parseInt(d) * vGap + nodeH/2
+      };
+    });
+  });
+
+  // Edges
+  treeEdges.forEach(e => {
+    const a = positions[e.from], b = positions[e.to];
+    if (!a || !b) return;
+    svg.appendChild(s('line', { x1:a.x, y1:a.y+nodeH/2, x2:b.x, y2:b.y-nodeH/2, stroke:'#1c2535', 'stroke-width':'1.5' }));
+  });
+
+  // Nodes
+  treeNodes.forEach(node => {
+    const pos = positions[node.id];
+    if (!pos) return;
+    const isActive = node.id === activeNid;
+    const fill = isActive ? 'rgba(0,229,160,0.15)' : node.done ? 'rgba(79,158,255,0.1)' : node.type==='leaf'?'rgba(255,179,71,0.1)':'rgba(155,114,255,0.1)';
+    const stroke = isActive ? '#00e5a0' : node.done ? '#4f9eff' : node.type==='leaf'?'#ffb347':'#9b72ff';
+    const textColor = isActive ? '#00e5a0' : node.type==='leaf'?'#ffb347':'#9b72ff';
+
+    svg.appendChild(s('rect', { x:pos.x-nodeW/2, y:pos.y-nodeH/2, width:nodeW, height:nodeH, rx:'4', fill, stroke, 'stroke-width':'1.5' }));
+    svg.appendChild(s('text', { x:pos.x, y:pos.y+4, 'text-anchor':'middle', fill:textColor, 'font-family':'IBM Plex Mono', 'font-size':'10', 'font-weight':'600' },
+      node.label + (node.result!==undefined?` d=${node.result.toFixed(2)}`:'')));
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  COMPLEXITY GRAPH
+// ════════════════════════════════════════════════════
+const measuredData = {};
+
+function updateComplexityGraph() {
+  const maxN = parseInt(document.getElementById('n-size-slider').value);
+  document.getElementById('n-size-val').textContent = maxN;
+
+  const svg = document.getElementById('complexity-svg');
+  const W = 700, H = 350;
+  const gPad = { l:60, r:20, t:20, b:50 };
+  svg.innerHTML = '';
+
+  const ns = [];
+  for (let n = 2; n <= maxN; n += Math.max(1, Math.floor(maxN/30))) ns.push(n);
+  if (ns[ns.length-1] !== maxN) ns.push(maxN);
+
+  const dcTheory = ns.map(n => n * Math.log2(n));
+  const bfTheory = ns.map(n => n*n/2);
+  const maxY = Math.max(...bfTheory) * 1.1;
+
+  function gx(n) { return gPad.l + (n-2)/(maxN-2) * (W-gPad.l-gPad.r); }
+  function gy(v) { return H-gPad.b - (v/maxY) * (H-gPad.t-gPad.b); }
+
+  // Grid
+  for (let i=0; i<=5; i++) {
+    const yv = (maxY/5)*i;
+    const y = gy(yv);
+    svg.appendChild(s('line', { x1:gPad.l, y1:y, x2:W-gPad.r, y2:y, stroke:'#1a2235', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:gPad.l-5, y:y+3, 'text-anchor':'end', fill:'#3a5070', 'font-family':'IBM Plex Mono', 'font-size':'9' }, Math.round(yv).toString()));
+  }
+  for (let i=0; i<ns.length; i+=Math.floor(ns.length/6)+1) {
+    const x = gx(ns[i]);
+    svg.appendChild(s('text', { x, y:H-gPad.b+14, 'text-anchor':'middle', fill:'#3a5070', 'font-family':'IBM Plex Mono', 'font-size':'9' }, String(ns[i])));
+    svg.appendChild(s('line', { x1:x, y1:gPad.t, x2:x, y2:H-gPad.b, stroke:'#1a2235', 'stroke-width':'1' }));
+  }
+
+  // Axes
+  svg.appendChild(s('line', { x1:gPad.l, y1:gPad.t, x2:gPad.l, y2:H-gPad.b, stroke:'#243044', 'stroke-width':'1.5' }));
+  svg.appendChild(s('line', { x1:gPad.l, y1:H-gPad.b, x2:W-gPad.r, y2:H-gPad.b, stroke:'#243044', 'stroke-width':'1.5' }));
+  svg.appendChild(s('text', { x:W/2, y:H-6, 'text-anchor':'middle', fill:'#4a6080', 'font-family':'IBM Plex Mono', 'font-size':'10' }, 'n (input size)'));
+  svg.appendChild(s('text', { x:12, y:H/2, 'text-anchor':'middle', fill:'#4a6080', 'font-family':'IBM Plex Mono', 'font-size':'10', transform:`rotate(-90,12,${H/2})` }, 'operations'));
+
+  // BF curve (theory)
+  let bfPath = ns.map((n,i) => `${i===0?'M':'L'}${gx(n)},${Math.max(gPad.t, gy(bfTheory[i]))}`).join('');
+  svg.appendChild(s('path', { d:bfPath, fill:'none', stroke:'rgba(255,179,71,0.5)', 'stroke-width':'2' }));
+
+  // DC curve (theory)
+  let dcPath = ns.map((n,i) => `${i===0?'M':'L'}${gx(n)},${Math.max(gPad.t, gy(dcTheory[i]))}`).join('');
+  svg.appendChild(s('path', { d:dcPath, fill:'none', stroke:'rgba(0,207,255,0.7)', 'stroke-width':'2' }));
+
+  // Measured dots
+  if (Object.keys(measuredData).length > 0) {
+    Object.entries(measuredData).forEach(([n, data]) => {
+      const ni = parseInt(n);
+      if (ni <= maxN) {
+        svg.appendChild(s('circle', { cx:gx(ni), cy:Math.max(gPad.t,gy(data.dc)), r:'4', fill:'#00cfff' }));
+        svg.appendChild(s('circle', { cx:gx(ni), cy:Math.max(gPad.t,gy(data.bf)), r:'4', fill:'#ffb347' }));
+      }
+    });
+  }
+
+  // Legend
+  const legendItems = [
+    { color:'rgba(255,179,71,0.7)', label:'BF O(n²)' },
+    { color:'rgba(0,207,255,0.85)', label:'D&C O(n log n)' },
+    { color:'#ffb347', label:'BF measured', dot:true },
+    { color:'#00cfff', label:'D&C measured', dot:true },
+  ];
+  legendItems.forEach((item, i) => {
+    const lx = gPad.l + 20 + i*120;
+    if (item.dot) svg.appendChild(s('circle', { cx:lx, cy:gPad.t+10, r:'4', fill:item.color }));
+    else svg.appendChild(s('line', { x1:lx-8, y1:gPad.t+10, x2:lx+8, y2:gPad.t+10, stroke:item.color, 'stroke-width':'2' }));
+    svg.appendChild(s('text', { x:lx+14, y:gPad.t+14, fill:'#6080a0', 'font-family':'IBM Plex Mono', 'font-size':'9' }, item.label));
+  });
+
+  updateComplexityTable(ns, dcTheory, bfTheory);
+}
+
+function updateComplexityTable(ns, dcTheory, bfTheory) {
+  const tbody = document.getElementById('complexity-tbody');
+  const sampleNs = [4,8,16,32,64,128].filter(n=>n<=ns[ns.length-1]+2);
+  tbody.innerHTML = sampleNs.map(n => {
+    const dc = Math.round(n * Math.log2(n));
+    const bf = Math.round(n*n/2);
+    const mdc = measuredData[n]?.dc || '—';
+    const mbf = measuredData[n]?.bf || '—';
+    const ratio = (bf/dc).toFixed(1);
+    return `<tr><td>${n}</td><td class="c-dc">${dc}</td><td class="c-bf">${bf}</td><td class="c-dc">${mdc}</td><td class="c-bf">${mbf}</td><td class="c-ratio">${ratio}×</td></tr>`;
+  }).join('');
+}
+
+function runComplexityBenchmark() {
+  [4,8,16,32,64,100].forEach(n => {
+    const pts = Array.from({length:n}, (_,i) => ({ x: Math.random()*10, y: Math.random()*10, id:i }));
+    let bfc = 0, dcc = 0;
+
+    // BF count
+    for (let i=0;i<pts.length;i++) for (let j=i+1;j<pts.length;j++) bfc++;
+
+    // DC count (approx)
+    function dcCount(arr) {
+      if (arr.length<=3) { let c=0; for(let i=0;i<arr.length;i++) for(let j=i+1;j<arr.length;j++) c++; dcc+=c; return; }
+      const m=Math.floor(arr.length/2);
+      dcCount(arr.slice(0,m)); dcCount(arr.slice(m));
+      dcc += arr.length; // strip O(n)
+    }
+    dcCount([...pts]);
+
+    measuredData[n] = { dc: dcc, bf: bfc };
+  });
+  updateComplexityGraph();
+}
+
+// ════════════════════════════════════════════════════
+//  SORTING DIAGRAM
+// ════════════════════════════════════════════════════
+function drawSortingDiagram() {
+  const svg = document.getElementById('sorting-svg');
+  const W = 700, H = 280;
+  svg.innerHTML = '';
+
+  const samplePts = [
+    {x:5,y:3,id:0},{x:2,y:7,id:1},{x:8,y:1,id:2},{x:1,y:5,id:3},
+    {x:6,y:8,id:4},{x:3,y:2,id:5},{x:9,y:6,id:6},{x:4,y:9,id:7}
+  ];
+  const sortedX = [...samplePts].sort((a,b)=>a.x-b.x);
+
+  // Title row
+  svg.appendChild(s('text', { x:20, y:22, fill:'#6080a0', 'font-family':'IBM Plex Mono', 'font-size':'11', 'font-weight':'600' }, 'STEP 1: Sort by X-coordinate'));
+  svg.appendChild(s('text', { x:20, y:155, fill:'#ffe066', 'font-family':'IBM Plex Mono', 'font-size':'11', 'font-weight':'600' }, 'STEP 2: Sort STRIP by Y-coordinate'));
+
+  // Original order
+  svg.appendChild(s('text', { x:20, y:42, fill:'#4a6080', 'font-family':'IBM Plex Mono', 'font-size':'9' }, 'Original:'));
+  samplePts.forEach((p,i) => {
+    const x = 80 + i*72;
+    svg.appendChild(s('rect', { x, y:30, width:60, height:22, rx:'3', fill:'rgba(79,158,255,0.1)', stroke:'rgba(79,158,255,0.3)', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:x+30, y:45, 'text-anchor':'middle', fill:'#4f9eff', 'font-family':'IBM Plex Mono', 'font-size':'10' }, `(${p.x},${p.y})`));
+  });
+
+  // Arrow
+  svg.appendChild(s('text', { x:W/2, y:78, 'text-anchor':'middle', fill:'#2d4060', 'font-family':'IBM Plex Mono', 'font-size':'18' }, '↓ sort by x'));
+
+  // Sorted
+  svg.appendChild(s('text', { x:20, y:115, fill:'#00cfff', 'font-family':'IBM Plex Mono', 'font-size':'9' }, 'Sorted by x:'));
+  sortedX.forEach((p,i) => {
+    const x = 80 + i*72;
+    svg.appendChild(s('rect', { x, y:100, width:60, height:22, rx:'3', fill:'rgba(0,207,255,0.1)', stroke:'rgba(0,207,255,0.4)', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:x+30, y:115, 'text-anchor':'middle', fill:'#00cfff', 'font-family':'IBM Plex Mono', 'font-size':'10' }, `(${p.x},${p.y})`));
+  });
+
+  // Strip section
+  const delta = 2.0, midX = 4.5;
+  const strip = sortedX.filter(p => Math.abs(p.x - midX) < delta);
+  const stripY = [...strip].sort((a,b)=>a.y-b.y);
+
+  svg.appendChild(s('text', { x:20, y:175, fill:'#4a6080', 'font-family':'IBM Plex Mono', 'font-size':'9' }, `Strip (|x−${midX}|<${delta}):`));
+  strip.forEach((p,i) => {
+    const x = 120 + i*72;
+    svg.appendChild(s('rect', { x, y:162, width:60, height:22, rx:'3', fill:'rgba(255,230,80,0.12)', stroke:'rgba(255,230,80,0.4)', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:x+30, y:177, 'text-anchor':'middle', fill:'#ffe066', 'font-family':'IBM Plex Mono', 'font-size':'10' }, `(${p.x},${p.y})`));
+  });
+
+  svg.appendChild(s('text', { x:W/2, y:208, 'text-anchor':'middle', fill:'#2d4060', 'font-family':'IBM Plex Mono', 'font-size':'14' }, '↓ sort strip by y'));
+
+  svg.appendChild(s('text', { x:20, y:240, fill:'#00e5a0', 'font-family':'IBM Plex Mono', 'font-size':'9' }, 'Strip by y:'));
+  stripY.forEach((p,i) => {
+    const x = 120 + i*72;
+    svg.appendChild(s('rect', { x, y:228, width:60, height:22, rx:'3', fill:'rgba(0,229,160,0.1)', stroke:'rgba(0,229,160,0.4)', 'stroke-width':'1' }));
+    svg.appendChild(s('text', { x:x+30, y:243, 'text-anchor':'middle', fill:'#00e5a0', 'font-family':'IBM Plex Mono', 'font-size':'10' }, `(${p.x},${p.y})`));
+    // 7-comparison arrows
+    if (i < stripY.length-1) {
+      const nc = Math.min(7, stripY.length-1-i);
+      svg.appendChild(s('text', { x:x+60+10, y:240, fill:'rgba(255,230,80,0.5)', 'font-family':'IBM Plex Mono', 'font-size':'9' }, `↔ check ${nc}`));
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════════════════
+function switchRightTab(tabId, btn) {
+  document.querySelectorAll('.right-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${tabId}`).classList.add('active');
+  if (tabId === 'sorting') drawSortingDiagram();
+  if (tabId === 'tree') drawTreeSvg();
+  if (tabId === 'complexity') updateComplexityGraph();
+}
+
+// ════════════════════════════════════════════════════
+//  EDUCATIONAL COLLAPSIBLES
+// ════════════════════════════════════════════════════
+function toggleEdu(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// ════════════════════════════════════════════════════
+//  STARTUP
+// ════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
